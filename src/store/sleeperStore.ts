@@ -1,8 +1,15 @@
 import { create } from 'zustand';
 import { Player, User, League, Team, Matchup, Transaction } from '../types/sleeper';
-import { getUserByUsername, fetchLeagues, fetchTeams, fetchMatchups, fetchTransactions } from '../services/sleeperService';
+import {
+  getUserByUsername,
+  fetchLeagues,
+  fetchTeams,
+  fetchMatchups,
+  fetchTransactions,
+} from '../services/sleeperService';
 import { fetchAllPlayers } from '../services/sleeperService';
 import { fetchPlayerStats } from '../api/sleeperApi';
+import { getLeagueUsers } from '../services/sleeperApiService';
 import { processPlayerStats } from '../services/stats';
 
 interface SleeperState {
@@ -121,16 +128,16 @@ export const useSleeperStore = create<SleeperState>((set, get) => ({
     try {
       set({ isLoadingPlayers: true, teamError: null });
       const players = await fetchAllPlayers();
-      set({ 
-        players, 
+      set({
+        players,
         isLoadingPlayers: false,
-        loadedRows: Object.keys(players).length 
+        loadedRows: Object.keys(players).length,
       });
     } catch (error) {
       console.error('Error fetching NFL players:', error);
-      set({ 
+      set({
         teamError: 'Failed to fetch NFL players',
-        isLoadingPlayers: false 
+        isLoadingPlayers: false,
       });
     }
   },
@@ -139,12 +146,12 @@ export const useSleeperStore = create<SleeperState>((set, get) => ({
     try {
       set({ teamError: null });
       const teams = await fetchTeams(leagueId);
-      
+
       // Update teams state
       set({ teams });
 
       // Filter user's teams
-      const userTeams = teams.filter(team => team.owner_id === get().currentUser?.user_id);
+      const userTeams = teams.filter((team) => team.owner_id === get().currentUser?.user_id);
       set({ userTeams });
     } catch (error) {
       console.error('Error fetching teams:', error);
@@ -154,11 +161,8 @@ export const useSleeperStore = create<SleeperState>((set, get) => ({
 
   fetchLeagueUsers: async (leagueId: string) => {
     try {
-      const response = await fetch(`${BASE_URL}/league/${leagueId}/users`);
-      if (!response.ok) throw new Error('Failed to fetch league users');
-      
-      const leagueUsers = await response.json();
-      
+      const leagueUsers = await getLeagueUsers(leagueId);
+
       // Convert array to record for easier lookup
       const usersRecord: Record<string, User> = {};
       leagueUsers.forEach((user: User) => {
@@ -166,7 +170,7 @@ export const useSleeperStore = create<SleeperState>((set, get) => ({
           usersRecord[user.user_id] = user;
         }
       });
-      
+
       set({ users: usersRecord });
     } catch (error) {
       console.error('Error fetching league users:', error);
@@ -194,7 +198,7 @@ export const useSleeperStore = create<SleeperState>((set, get) => ({
   fetchPlayerStats: async (playerId: string, season: string, week: number) => {
     try {
       set({ isLoadingStats: true });
-      
+
       // Check if stats already exist in store
       const existingStats = get().playerStats[playerId]?.[season]?.[week];
       if (existingStats) {
@@ -203,23 +207,23 @@ export const useSleeperStore = create<SleeperState>((set, get) => ({
       }
 
       const stats = await fetchPlayerStats(playerId, season, week);
-      
-      set(state => ({
+
+      set((state) => ({
         playerStats: {
           ...state.playerStats,
           [playerId]: {
             ...state.playerStats[playerId],
             [season]: {
               ...state.playerStats[playerId]?.[season],
-              [week]: stats
-            }
-          }
+              [week]: stats,
+            },
+          },
         },
-        isLoadingStats: false
+        isLoadingStats: false,
       }));
     } catch (error) {
       console.error('Error fetching player stats:', error);
       set({ isLoadingStats: false });
     }
-  }
+  },
 }));
