@@ -1,3 +1,22 @@
+"""Utility helpers for database interactions."""
+
+from typing import Dict
+import os
+
+try:
+    from supabase import create_client, Client
+except Exception:  # pragma: no cover - supabase may not be installed in dev env
+    Client = None  # type: ignore
+    create_client = None
+
+SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+
+supabase: Client | None = None
+if create_client and SUPABASE_URL and SUPABASE_KEY:
+    supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+
 async def fetch_player_stats(player_id: str) -> Dict:
     """Fetch player stats from database for comparison"""
     try:

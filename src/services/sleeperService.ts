@@ -198,3 +198,6 @@ export const calculateStandings = (teams: Team[]) => {
       return (b.points_for || 0) - (a.points_for || 0);
     });
 };
+
+// Re-export fantasy point calculator for convenience
+export { calculateFantasyPoints } from './playerAttributesService';
