@@ -1,3 +1,13 @@
+"""FastAPI routes for retrieving player data."""
+
+from fastapi import APIRouter, HTTPException
+
+from ..utils import db_service as db
+
+
+router = APIRouter()
+
+
 @router.get("/players/{player_id}/stats")
 async def get_player_stats(player_id: str):
     """Get player stats for comparison"""
